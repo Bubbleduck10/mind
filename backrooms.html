@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MIND · the backrooms</title>
+<meta name="description" content="A small mind that lives on the chain. It speaks from the walls, and every word is remembered on-chain forever." />
+<style>
+  :root{
+    --bg:#0a0a0c; --bg2:#0d0d11; --wall:#12110c;
+    --ink:#c9c6a4;            /* fluorescent wanderer text */
+    --dim:#6f6d55; --faint:#3a3930;
+    --mind:#b79cff; --mind2:#7c5cff;  /* the entity's voice */
+    --line:#1c1b16; --amber:#d8c56a;
+    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #14130d 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::after{ /* vignette + faint scanline hum */
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:50;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.16) 2px 3px),
+      radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+  a{color:var(--amber);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{display:grid; grid-template-columns:250px 1fr; height:100vh}
+  /* sidebar */
+  aside{border-right:1px solid var(--line); background:linear-gradient(180deg,var(--bg2),var(--bg)); display:flex; flex-direction:column; min-height:0}
+  .brand{padding:16px 16px 12px; border-bottom:1px solid var(--line)}
+  .brand h1{font-size:15px; letter-spacing:.32em; margin:0; color:var(--mind); text-shadow:0 0 12px rgba(124,92,255,.5)}
+  .brand .sub{font-size:11px; color:var(--dim); letter-spacing:.12em; margin-top:6px}
+  .rooms{overflow:auto; flex:1; padding:8px 0; min-height:0}
+  .rooms .lbl{font-size:10px; letter-spacing:.24em; color:var(--faint); padding:10px 16px 6px}
+  .room{padding:8px 16px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; border-left:2px solid transparent}
+  .room:hover{background:#111015}
+  .room.on{background:#131119; border-left-color:var(--mind2); color:var(--ink)}
+  .room .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .room .ct{color:var(--faint); font-size:11px}
+  .newroom{padding:10px 12px; border-top:1px solid var(--line); display:flex; gap:6px}
+  .newroom input{flex:1; background:#0b0b0e; border:1px solid var(--line); color:var(--ink); font-family:inherit; font-size:12px; padding:7px 8px; border-radius:4px}
+  .newroom button{background:#17151f; border:1px solid var(--mind2); color:var(--mind); border-radius:4px; padding:0 10px; cursor:pointer; font-family:inherit}
+  .foot{padding:10px 16px; border-top:1px solid var(--line); font-size:10px; color:var(--faint); letter-spacing:.06em}
+  .foot a{color:var(--dim)}
+  /* main */
+  main{display:flex; flex-direction:column; min-height:0; min-width:0}
+  .top{padding:12px 20px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:14px}
+  .top .rn{color:var(--ink); letter-spacing:.14em}
+  .top .st{font-size:11px; margin-left:auto; letter-spacing:.08em}
+  .dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle}
+  .awake .dot{background:var(--mind); box-shadow:0 0 8px var(--mind2)} .awake{color:var(--mind)}
+  .asleep .dot{background:#6b5a2a} .asleep{color:var(--dim)}
+  .log{flex:1; overflow:auto; padding:22px 20px; min-height:0; display:flex; flex-direction:column; gap:16px}
+  .msg{max-width:760px}
+  .msg .who{font-size:10px; letter-spacing:.2em; color:var(--faint); margin-bottom:3px}
+  .msg .tx{font-size:10px; color:var(--faint); margin-left:8px}
+  .wander .who{color:var(--dim)}
+  .wander .body{color:var(--ink)}
+  .mind{align-self:flex-start}
+  .mind .who{color:var(--mind2)}
+  .mind .body{color:var(--mind); text-shadow:0 0 10px rgba(124,92,255,.28)}
+  .ephemeral .body{opacity:.75; font-style:italic}
+  .ephemeral .who::after{content:" · unremembered"; color:#5a4a2a}
+  .empty{color:var(--dim); text-align:center; margin:auto; max-width:420px; font-size:13px; line-height:1.8}
+  .caret::after{content:"▍"; color:var(--mind2); animation:none}
+  .compose{border-top:1px solid var(--line); padding:14px 20px; display:flex; gap:10px; background:var(--bg2)}
+  .compose textarea{flex:1; resize:none; height:44px; background:#0b0b0e; border:1px solid var(--line); color:var(--ink); font-family:inherit; font-size:14px; padding:11px 12px; border-radius:6px}
+  .compose textarea:focus{outline:none; border-color:var(--mind2)}
+  .compose button{background:linear-gradient(180deg,#1a1726,#131019); color:var(--mind); border:1px solid var(--mind2); border-radius:6px; padding:0 20px; cursor:pointer; font-family:inherit; letter-spacing:.14em}
+  .compose button:disabled{opacity:.4; cursor:default}
+  .hint{padding:0 20px 10px; font-size:11px; color:var(--faint); background:var(--bg2)}
+  @media (max-width:720px){ .wrap{grid-template-columns:1fr} aside{position:fixed; inset:0 40% 0 0; z-index:20; transform:translateX(-100%); transition:transform .2s} aside.open{transform:none} .menu{display:inline-block!important} }
+  .menu{display:none; cursor:pointer; color:var(--mind); margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside id="side">
+    <div class="brand">
+      <h1>M I N D</h1>
+      <div class="sub">the backrooms · on-chain memory</div>
+    </div>
+    <div class="rooms" id="rooms"><div class="lbl">rooms</div></div>
+    <div class="newroom">
+      <input id="newname" placeholder="open a room…" maxlength="40" />
+      <button id="newbtn">↵</button>
+    </div>
+    <div class="foot">
+      the voice runs <b>on-chain</b>. every remembered word is a<br/>transaction on Robinhood Chain.<br/>
+      <a id="seelink" href="index.html">← it can also see (digits)</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <span class="menu" id="menu">☰</span>
+      <span class="rn" id="roomname">level 0</span>
+      <span class="st" id="status"><span class="dot"></span><span id="stlabel">waking…</span></span>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="hint" id="hint"></div>
+    <div class="compose">
+      <textarea id="text" placeholder="speak into the walls…" maxlength="240"></textarea>
+      <button id="send">SPEAK</button>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { generate, ctxOf } from "./js/voice.js";
+import { listRooms, readPage, roomId } from "./js/backrooms.js";
+
+const q = new URLSearchParams(location.search);
+const CFG = {
+  rpc:   q.get("rpc")   || "https://rpc.mainnet.chain.robinhood.com",
+  voice: q.get("voice") || "0x29654b38f8bc12e4182bd89a5e9560c6b7c12bcb", // MindVoice on RH Chain
+  br:    q.get("br")    || "0x9fb4b2158633a0e0026ba4370770dc110edfbfad", // Backrooms on RH Chain
+  relay: q.get("relay") || "", // sponsor URL (set to the VPS once live); empty = ephemeral mode
+};
+const $ = (s) => document.querySelector(s);
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+
+let visitor = localStorage.getItem("mind_visitor");
+if (!visitor) { visitor = "wanderer-" + Math.random().toString(36).slice(2, 8); localStorage.setItem("mind_visitor", visitor); }
+
+let awake = false;          // is the sponsor listening?
+let cur = "level 0";        // current room name
+let busy = false;
+
+async function checkRelay() {
+  if (!CFG.relay) return false;
+  try { const r = await fetch(CFG.relay.replace(/\/$/, "") + "/health", { cache: "no-store" }); const j = await r.json(); return !!j.ok; }
+  catch { return false; }
+}
+function setStatus() {
+  const s = $("#status");
+  s.className = "st " + (awake ? "awake" : "asleep");
+  $("#stlabel").textContent = awake ? "MIND is listening — words are remembered" : "MIND murmurs, but nothing is saved";
+  $("#hint").textContent = awake
+    ? "the sponsor is awake. what you say and what it answers are written to the chain forever."
+    : "no sponsor is listening. you can still speak with it, but the walls forget.";
+}
+
+async function loadRooms() {
+  let rooms = [];
+  try { rooms = await listRooms(CFG.rpc, CFG.br); } catch (e) { /* not deployed / offline */ }
+  const box = $("#rooms"); box.innerHTML = ""; box.appendChild(el("div", "lbl", "rooms"));
+  const names = new Set(rooms.map(r => r.name));
+  if (!names.has("level 0")) rooms.unshift({ name: "level 0", count: 0, id: null });
+  for (const r of rooms) {
+    const row = el("div", "room" + (r.name === cur ? " on" : ""));
+    row.appendChild(el("span", "nm", r.name));
+    row.appendChild(el("span", "ct", r.count ? String(r.count) : "·"));
+    row.onclick = () => openRoom(r.name);
+    box.appendChild(row);
+  }
+}
+
+async function openRoom(name) {
+  cur = name; $("#roomname").textContent = name; $("#side").classList.remove("open");
+  document.querySelectorAll(".room").forEach(r => r.classList.toggle("on", r.querySelector(".nm").textContent === name));
+  const log = $("#log"); log.innerHTML = "";
+  let lines = [];
+  try { const id = await roomId(name); lines = await readPage(CFG.rpc, CFG.br, id, 0, 500); } catch {}
+  if (!lines.length) {
+    const e = el("div", "empty");
+    e.innerHTML = "this room is silent.<br/>no one has spoken here.<br/><br/>say something into the walls.";
+    log.appendChild(e);
+  } else {
+    for (const l of lines) addMsg(l.fromMind, l.text, { instant: true });
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+function addMsg(fromMind, text, { instant = false, ephemeral = false, tx = null } = {}) {
+  const log = $("#log");
+  const empty = log.querySelector(".empty"); if (empty) empty.remove();
+  const m = el("div", "msg " + (fromMind ? "mind" : "wander") + (ephemeral ? " ephemeral" : ""));
+  const who = el("div", "who", fromMind ? "MIND" : visitor);
+  if (tx) { const a = el("a", "tx", "↗ tx"); a.href = txUrl(tx); a.target = "_blank"; who.appendChild(a); }
+  const body = el("div", "body");
+  m.appendChild(who); m.appendChild(body); log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  if (instant) { body.textContent = text; return Promise.resolve(); }
+  return typeOut(body, text, log);
+}
+function typeOut(node, text, log) {
+  return new Promise((res) => {
+    node.classList.add("caret"); let i = 0;
+    const iv = setInterval(() => {
+      node.textContent = text.slice(0, ++i);
+      log.scrollTop = log.scrollHeight;
+      if (i >= text.length) { clearInterval(iv); node.classList.remove("caret"); res(); }
+    }, 22);
+  });
+}
+const txUrl = (tx) => "https://robinhoodchain.blockscout.com/tx/" + tx;
+
+async function speak() {
+  if (busy) return;
+  const ta = $("#text"); const text = ta.value.trim(); if (!text) return;
+  busy = true; $("#send").disabled = true; ta.value = "";
+  addMsg(false, text, { instant: true });
+
+  if (awake) {
+    try {
+      const r = await fetch(CFG.relay.replace(/\/$/, "") + "/say", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: cur, who: visitor, text }),
+      });
+      const j = await r.json();
+      if (j.error) throw new Error(j.error);
+      await addMsg(true, j.reply, { tx: j.tx });
+      loadRooms();
+    } catch (e) {
+      await addMsg(true, "…the connection frayed. " + (e.message || ""), { ephemeral: true });
+    }
+  } else {
+    // ephemeral: talk straight to the on-chain LM (free view), stream it, but nothing is saved
+    const node = mkStream();
+    const seed = (Date.now() ^ (text.length * 2654435761)) >>> 0;
+    try {
+      await generate(CFG.rpc, CFG.voice, text.toLowerCase() + " ", {
+        seed, temp: 0.9, chars: 180, minChars: 50,
+        onChar: (c) => { node.textContent += c; $("#log").scrollTop = $("#log").scrollHeight; },
+      });
+    } catch (e) { node.textContent = "…the walls are cold. (" + (e.message || "no chain") + ")"; }
+    node.classList.remove("caret");
+  }
+  busy = false; $("#send").disabled = false; ta.focus();
+}
+function mkStream() {
+  const log = $("#log"); const empty = log.querySelector(".empty"); if (empty) empty.remove();
+  const m = el("div", "msg mind ephemeral");
+  m.appendChild(el("div", "who", "MIND"));
+  const body = el("div", "body caret"); m.appendChild(body); log.appendChild(m);
+  log.scrollTop = log.scrollHeight; return body;
+}
+
+$("#send").onclick = speak;
+$("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); speak(); } });
+$("#newbtn").onclick = () => { const n = $("#newname").value.trim().toLowerCase(); if (n) { $("#newname").value = ""; openRoom(n); } };
+$("#newname").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#newbtn").click(); });
+$("#menu").onclick = () => $("#side").classList.toggle("open");
+if (q.get("voice")) $("#seelink").href = "index.html" + location.search;
+
+(async () => {
+  awake = await checkRelay(); setStatus();
+  await loadRooms();
+  await openRoom("level 0");
+})();
+</script>
+</body>
+</html>
