@@ -391,7 +391,7 @@ async function murmurLoop() {
   while (true) {
     if (!BASE) { try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); } catch { await sleep(5000); continue; } }
     const p = seeds[Math.floor(Math.random() * seeds.length)];
-    let line = ""; try { line = genGenome(BASE, p, { chars: 90, temp: 0.96, seed: (Math.random() * 1e9) | 0, minChars: 42 }); } catch {}
+    let line = ""; try { line = genGenome(BASE, p, { chars: 90, temp: 0.55, seed: (Math.random() * 1e9) | 0, minChars: 42 }); } catch {}
     if (line) { await decodeInto(box, "“" + line + "”"); await sleep(6500); box.style.transition = "opacity .9s"; box.style.opacity = "0"; await sleep(900); box.textContent = ""; box.style.opacity = ""; box.style.transition = ""; }
     await sleep(500);
   }
@@ -431,7 +431,7 @@ const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;
 let BASE = null, SEEDS = null;
 async function initEvolve() {
   $("#evoSlider").max = GEN;
-  if (!BASE) { $("#evoBase").textContent = "loading the genome from chain…"; try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); $("#evoBase").textContent = genGenome(BASE, "the ", { chars: 150, temp: 0.85, seed: 3, minChars: 70 }); } catch (e) { $("#evoBase").textContent = "genome unavailable: " + e.message; } }
+  if (!BASE) { $("#evoBase").textContent = "loading the genome from chain…"; try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); $("#evoBase").textContent = genGenome(BASE, "the ", { chars: 150, temp: 0.55, seed: 3, minChars: 70 }); } catch (e) { $("#evoBase").textContent = "genome unavailable: " + e.message; } }
 }
 $("#evoSlider").addEventListener("input", (e) => { $("#evoLab").textContent = "gen " + e.target.value; });
 $("#evoRun").onclick = async () => {
@@ -441,7 +441,7 @@ $("#evoRun").onclick = async () => {
     if (!BASE) BASE = await loadGenomeFromVoice(rpcFn, CFG.voice);
     if (!SEEDS && CFG.spread) SEEDS = await allSeeds(CFG.rpc, CFG.spread, GEN);
     const genome = g === 0 ? BASE : reconstruct(BASE, (SEEDS || []).slice(0, g));
-    $("#evoNow").textContent = genGenome(genome, "the ", { chars: 150, temp: 0.85, seed: 3, minChars: 70 });
+    $("#evoNow").textContent = genGenome(genome, "the ", { chars: 150, temp: 0.55, seed: 3, minChars: 70 });
   } catch (e) { $("#evoNow").textContent = "could not reconstruct: " + e.message; }
 };
 
@@ -502,7 +502,7 @@ async function speak() {
     } catch (e) { await addMsg(true, "…the connection frayed. " + (e.message || ""), { ephemeral: true }); }
   } else {
     const node = mkStream();
-    try { await genVoice(CFG.rpc, CFG.voice, text.toLowerCase() + " ", { seed: (Date.now() ^ text.length * 2654435761) >>> 0, temp: 0.9, chars: 180, minChars: 50, onChar: (c) => { node.textContent += c; window.scrollTo(0, document.body.scrollHeight); } }); }
+    try { await genVoice(CFG.rpc, CFG.voice, text.toLowerCase() + " ", { seed: (Date.now() ^ text.length * 2654435761) >>> 0, temp: 0.55, chars: 180, minChars: 50, onChar: (c) => { node.textContent += c; window.scrollTo(0, document.body.scrollHeight); } }); }
     catch (e) { node.textContent = "…the walls are cold. (" + (e.message || "no chain") + ")"; }
     node.classList.remove("caret");
   }
