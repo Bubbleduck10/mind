@@ -122,7 +122,7 @@ const CFG = {
   rpc:   q.get("rpc")   || "https://rpc.mainnet.chain.robinhood.com",
   voice: q.get("voice") || "0x29654b38f8bc12e4182bd89a5e9560c6b7c12bcb", // MindVoice on RH Chain
   br:    q.get("br")    || "0x9fb4b2158633a0e0026ba4370770dc110edfbfad", // Backrooms on RH Chain
-  relay: q.get("relay") || "", // sponsor URL (set to the VPS once live); empty = ephemeral mode
+  relay: q.get("relay") || "https://mind-sponsor.onrender.com", // sponsor relayer (Render); empty = ephemeral mode
 };
 const $ = (s) => document.querySelector(s);
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
