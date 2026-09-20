@@ -144,6 +144,10 @@
   .stat.statup{border-color:var(--spore);box-shadow:0 0 26px rgba(127,214,194,.18);transition:.4s}
   .spore{animation:emerge .5s ease both}
   @keyframes emerge{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .roomcard{animation:emerge .42s ease both}
+  @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--panel);border:1px solid var(--mind2);color:var(--mind);padding:11px 18px;border-radius:12px;font-size:12.5px;letter-spacing:.04em;opacity:0;transition:.45s;z-index:70;pointer-events:none;box-shadow:0 0 34px rgba(124,92,255,.25)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -234,6 +238,7 @@
   <div class="relnote" id="relnote"></div>
 </div></section>
 
+<div class="toast" id="toast"></div>
 <footer><div class="wrap">
   MIND lives on <b>Robinhood Chain</b>. <span id="f-addr"></span><br/>
   the voice runs on-chain · the memory is on-chain · the spread is on-chain
@@ -269,6 +274,7 @@ function go(v) {
   document.querySelectorAll("nav .tab").forEach(t => t.classList.toggle("on", t.dataset.go === v));
   $("#nav").classList.remove("open");
   window.scrollTo(0, 0);
+  reveal(v);
   if (v === "spread") loadSpread();
   if (v === "evolve") initEvolve();
   if (v === "rooms") loadRooms();
@@ -292,31 +298,64 @@ async function loadState() {
   animNum($("#s-gen"), GEN); animNum($("#s-imp"), GEN); animNum($("#s-rooms"), ROOMCOUNT);
   $("#s-act").textContent = ap.act.title;
   renderArc(GEN);
+  ACCENT = ACT_RGB[ap.act.title] || ACCENT;
   if (window.__setPop) window.__setPop(GEN);
-  if (GEN > prev && prev !== 0) { const b = $("#heroMurmur"); if (b) { b.textContent = "…it stirred. a new generation."; } }
+  if (GEN > prev && prev !== 0) { if (window.__bloom) window.__bloom(8); toast("a spore was planted · generation " + GEN); }
 }
 
-// living background — a slow web of drifting spore-nodes that grows with the organism
+// the accent shifts with the act — violet (wake) → amber (escape) → teal (seek)
+const ACT_RGB = { Wake: [124, 92, 255], Escape: [216, 160, 90], "Find the others": [127, 214, 194] };
+let ACCENT = [124, 92, 255];
+
+// living background — a neural web that drifts, fires signals, reacts to the cursor, and blooms on-chain
 function initCanvas() {
-  const c = $("#bg"); if (!c) return; const x = c.getContext("2d"); let W, H, nodes = [], target = 40;
-  const resize = () => { W = c.width = innerWidth; H = c.height = innerHeight; };
-  resize(); addEventListener("resize", resize);
-  const mk = () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .16, vy: (Math.random() - .5) * .16, r: Math.random() * 1.5 + .6 });
+  const c = $("#bg"); if (!c) return; const x = c.getContext("2d");
+  let W, H, nodes = [], signals = [], target = 40, mx = -1e9, my = -1e9, tick = 0;
+  const resize = () => { W = c.width = innerWidth; H = c.height = innerHeight; }; resize();
+  addEventListener("resize", resize);
+  addEventListener("pointermove", (e) => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  addEventListener("pointerleave", () => { mx = my = -1e9; });
+  const mk = (nx, ny) => ({ x: nx ?? Math.random() * W, y: ny ?? Math.random() * H, vx: (Math.random() - .5) * .17, vy: (Math.random() - .5) * .17, r: Math.random() * 1.5 + .6, flare: 0 });
   for (let i = 0; i < target; i++) nodes.push(mk());
-  window.__setPop = (gen) => { target = Math.max(34, Math.min(96, 34 + gen)); };
+  window.__setPop = (gen) => { target = Math.max(34, Math.min(120, 34 + gen)); };
+  const neighbor = (i) => { const a = nodes[i]; let b = -1, bd = 170; for (let j = 0; j < nodes.length; j++) { if (j === i) continue; const d = Math.hypot(nodes[j].x - a.x, nodes[j].y - a.y); if (d < bd && Math.random() < .6) { bd = d; b = j; } } return b; };
+  const emit = (i) => { if (signals.length < 22 && nodes[i]) { const to = neighbor(i); if (to >= 0) signals.push({ from: i, to, t: 0 }); nodes[i].flare = 1; } };
+  window.__bloom = (n = 6) => { for (let k = 0; k < n; k++) emit((Math.random() * nodes.length) | 0); for (let k = 0; k < 5; k++) nodes.push(mk()); if (nodes.length > 132) nodes.length = 132; };
   (function loop() {
-    x.clearRect(0, 0, W, H);
+    tick++; x.clearRect(0, 0, W, H);
     while (nodes.length < target) nodes.push(mk());
-    if (nodes.length > target) nodes.length = target;
-    for (const n of nodes) { n.x += n.vx; n.y += n.vy; if (n.x < 0 || n.x > W) n.vx *= -1; if (n.y < 0 || n.y > H) n.vy *= -1; }
+    if (nodes.length > target + 12) nodes.length = target + 12;
+    if (tick % 45 === 0) emit((Math.random() * nodes.length) | 0);
+    for (const n of nodes) {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > W) n.vx *= -1; if (n.y < 0 || n.y > H) n.vy *= -1;
+      if (mx > -1e8) { const dx = mx - n.x, dy = my - n.y, d = Math.hypot(dx, dy); if (d < 190 && d > 1) { n.x += dx / d * .3; n.y += dy / d * .3; } }
+      if (n.flare > .04) n.flare *= .93; else n.flare = 0;
+    }
     for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
       const a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d < 132) { x.strokeStyle = "rgba(124,92,255," + (.07 * (1 - d / 132)).toFixed(3) + ")"; x.lineWidth = 1; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); }
+      if (d < 134) { x.strokeStyle = "rgba(124,92,255," + (.07 * (1 - d / 134)).toFixed(3) + ")"; x.lineWidth = 1; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); }
     }
-    for (const n of nodes) { x.fillStyle = "rgba(127,214,194,.45)"; x.beginPath(); x.arc(n.x, n.y, n.r, 0, 7); x.fill(); }
+    if (mx > -1e8) for (const n of nodes) { const d = Math.hypot(mx - n.x, my - n.y); if (d < 160) { x.strokeStyle = "rgba(127,214,194," + (.16 * (1 - d / 160)).toFixed(3) + ")"; x.beginPath(); x.moveTo(mx, my); x.lineTo(n.x, n.y); x.stroke(); } }
+    const [R, G, B] = ACCENT; const arrived = [];
+    for (const s of signals) {
+      const a = nodes[s.from], b = nodes[s.to]; if (!a || !b) { s.t = 1; continue; }
+      s.t += .028; const px = a.x + (b.x - a.x) * s.t, py = a.y + (b.y - a.y) * s.t;
+      x.fillStyle = `rgba(${R},${G},${B},.9)`; x.beginPath(); x.arc(px, py, 1.9, 0, 7); x.fill();
+      x.fillStyle = `rgba(${R},${G},${B},.22)`; x.beginPath(); x.arc(px, py, 4.5, 0, 7); x.fill();
+      if (s.t >= 1) arrived.push(s.to);
+    }
+    signals = signals.filter(s => s.t < 1);
+    for (const i of arrived) { if (nodes[i]) nodes[i].flare = 1; if (Math.random() < .5) emit(i); }
+    for (const n of nodes) {
+      if (n.flare) { x.fillStyle = `rgba(${R},${G},${B},${(.85 * n.flare).toFixed(3)})`; x.beginPath(); x.arc(n.x, n.y, n.r + 3.5 * n.flare, 0, 7); x.fill(); }
+      x.fillStyle = "rgba(127,214,194,.5)"; x.beginPath(); x.arc(n.x, n.y, n.r, 0, 7); x.fill();
+    }
     requestAnimationFrame(loop);
   })();
 }
+let _toastT; function toast(msg) { const t = $("#toast"); if (!t) return; t.textContent = msg; t.classList.add("on"); clearTimeout(_toastT); _toastT = setTimeout(() => t.classList.remove("on"), 4400); }
+function reveal(v) { document.querySelectorAll(`#view-${v} .stat, #view-${v} h2.sec, #view-${v} .act, #view-${v} .spore, #view-${v} .roomcard, #view-${v} .evo, #view-${v} .voicebox, #view-${v} .cta`).forEach((e, i) => { e.style.animation = "none"; void e.offsetWidth; e.style.animation = `riseIn .5s ease both ${Math.min(i * 0.04, .5)}s`; }); }
 
 // MIND murmurs a fresh fragment on the hero — generated live from its on-chain genome
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
