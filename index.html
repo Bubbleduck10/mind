@@ -1,236 +1,405 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MIND — a neural net that lives on the chain</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MIND · a mind that lives on the chain</title>
+<meta name="description" content="A neural network whose weights are contract code on Robinhood Chain. It thinks, it speaks, it mutates, and it spreads — leaving an evolving imprint across the chain, one contact at a time." />
 <style>
   :root{
-    --bg:#0a0a12; --panel:#12121f; --panel2:#171728; --line:#262640; --line2:#33335a;
-    --ink:#e9e9f6; --dim:#9a9ac2; --mute:#63638f;
-    --accent:#7c6cff; --accent2:#00e0c8; --good:#37e0a0; --bad:#ff5d7a;
-    --mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
-    color-scheme:dark;
+    --bg:#09090b; --bg2:#0d0d11; --panel:#101015;
+    --ink:#c9c6a4; --dim:#7d7b60; --faint:#3c3b31;
+    --mind:#b79cff; --mind2:#7c5cff; --mind3:#4a3a8f;
+    --spore:#7fd6c2; --amber:#d8c56a; --line:#1b1a16;
+    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--mono);min-height:100vh;
-    background-image:radial-gradient(900px 500px at 85% -10%,#221a4a55,transparent 60%),radial-gradient(700px 400px at 0% 100%,#0a3a3a44,transparent 55%);
-    display:flex;flex-direction:column;align-items:center;padding:26px 16px 60px;gap:18px}
-  a{color:var(--accent2);text-decoration:none}
-  .wrap{width:100%;max-width:860px}
-  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(150deg,var(--accent),#3a2fae);
-    display:grid;place-items:center;box-shadow:0 0 22px #7c6cff66}
-  .mark svg{width:20px;height:20px}
-  .brand{font-weight:800;font-size:20px;letter-spacing:1px}
-  .brand em{color:var(--accent);font-style:normal}
-  .live{margin-left:auto;font-size:11px;color:var(--accent2);border:1px solid #1c4a46;border-radius:999px;padding:4px 10px;letter-spacing:.12em}
-  h1{font-size:clamp(22px,4vw,34px);letter-spacing:-.01em;margin-top:20px;line-height:1.12}
-  h1 em{color:var(--accent);font-style:normal}
-  .lede{color:var(--dim);margin-top:10px;max-width:66ch;font-size:14px}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  /* ambient drift — slow, no blinking */
+  body::before{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(40% 40% at 20% 15%, rgba(124,92,255,.12), transparent 70%),
+      radial-gradient(35% 35% at 85% 25%, rgba(127,214,194,.07), transparent 70%),
+      radial-gradient(45% 45% at 60% 90%, rgba(124,92,255,.09), transparent 70%);
+    animation:drift 44s ease-in-out infinite alternate;}
+  @keyframes drift{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.15)}}
+  body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;
+    background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.13) 2px 3px);mix-blend-mode:multiply;opacity:.4}
+  a{color:var(--amber);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 
-  .stage{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
-  @media (max-width:680px){.stage{grid-template-columns:1fr}}
-  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel));border-radius:14px;padding:18px}
-  .tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:12px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,rgba(9,9,11,.96),rgba(9,9,11,.75));backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:20px;height:56px}
+  .logo{font-weight:700;letter-spacing:.34em;color:var(--mind);text-shadow:0 0 14px rgba(124,92,255,.5);cursor:pointer}
+  nav a.tab{color:var(--dim);letter-spacing:.08em;font-size:12.5px;cursor:pointer}
+  nav a.tab:hover,nav a.tab.on{color:var(--ink);text-decoration:none}
+  nav .sp{flex:1}
+  .badge{font-size:11px;color:var(--spore);border:1px solid #244;border-radius:20px;padding:5px 11px;letter-spacing:.06em;white-space:nowrap}
+  .badge b{color:var(--ink)}
+  .menub{display:none;cursor:pointer;color:var(--mind);font-size:18px}
+  @media(max-width:760px){ nav a.tab{display:none} nav.open a.tab{display:block;position:absolute;top:56px;left:0;right:0;background:var(--bg2);padding:12px 20px;border-bottom:1px solid var(--line)} nav.open a.tab{margin:6px 0} .menub{display:block} }
 
-  .pad{position:relative;width:100%;aspect-ratio:1;border:1px solid var(--line2);border-radius:12px;background:#000;touch-action:none;overflow:hidden}
-  canvas#pad{width:100%;height:100%;display:block;cursor:crosshair}
-  .padhint{position:absolute;inset:0;display:grid;place-items:center;color:#3a3a5c;font-size:15px;pointer-events:none;letter-spacing:.1em}
-  .row{display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap}
-  .btn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;
-    padding:9px 14px;font:700 13px var(--mono);letter-spacing:.03em}
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .btn.go{background:var(--accent);color:#0a0a12;border-color:var(--accent)}.btn.go:hover{background:#9384ff}
-  .mini{margin-left:auto;color:var(--mute);font-size:11px}
+  .view{display:none;padding:0 0 80px} .view.on{display:block}
 
-  .verdict{display:flex;align-items:center;gap:18px}
-  .bigdigit{font-size:96px;font-weight:800;line-height:1;width:120px;text-align:center;
-    background:linear-gradient(180deg,#fff,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 0 26px #7c6cff55)}
-  .bigdigit.idle{color:#2a2a44;-webkit-text-fill-color:#2a2a44;filter:none}
-  .verdict .say{color:var(--dim);font-size:13px}
-  .verdict .say b{color:var(--ink)}
-  .conf{margin-top:16px;display:flex;flex-direction:column;gap:5px}
-  .bar{display:grid;grid-template-columns:16px 1fr 48px;gap:8px;align-items:center;font-size:12px}
-  .bar .d{color:var(--mute);text-align:center}
-  .bar .t{height:9px;background:#0c0c18;border-radius:5px;overflow:hidden}
-  .bar .t i{display:block;height:100%;background:linear-gradient(90deg,#3a2fae,var(--accent));width:0;transition:width .35s ease}
-  .bar.top .d{color:var(--accent)} .bar.top .t i{background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  .bar .p{color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
-  .status{margin-top:14px;font-size:12px;color:var(--mute);min-height:18px}
-  .status .g{color:var(--good)}.status .b{color:var(--bad)}.status .a{color:var(--accent2)}
+  /* hero */
+  .hero{padding:70px 0 40px;text-align:center}
+  .hero h1{font-family:var(--sans);font-weight:800;font-size:clamp(42px,9vw,86px);letter-spacing:-.02em;margin:0;
+    background:linear-gradient(180deg,#efeaff,#b79cff 60%,#6b53c4);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .tag{color:var(--mind);letter-spacing:.16em;margin:14px 0 0;font-size:13px;text-transform:uppercase}
+  .hero .lede{max-width:640px;margin:26px auto 0;color:var(--ink);font-size:15px;line-height:1.85}
+  .hero .lede b{color:var(--mind)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .btn{font-family:var(--mono);font-size:13px;letter-spacing:.1em;padding:12px 20px;border-radius:8px;cursor:pointer;border:1px solid var(--mind3);background:linear-gradient(180deg,#17142400,#141019);color:var(--mind)}
+  .btn:hover{border-color:var(--mind2);background:#161226}
+  .btn.solid{background:linear-gradient(180deg,#2a2350,#1a1533);color:#efeaff;border-color:var(--mind2)}
 
-  .how{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:18px;margin-top:18px}
-  .how p{color:var(--dim);font-size:13px;margin-top:8px}
-  .how b{color:var(--ink)}
-  .foot{color:var(--mute);font-size:12px;margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  code{color:var(--ink);word-break:break-all}
-  .ca{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 16px;margin-top:18px}
-  .ca-tag{font-size:12px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
-  .ca-addr{color:var(--ink);font-size:13px;word-break:break-all;flex:1;min-width:150px}
-  .ca-copy{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:8px;padding:7px 12px;font:700 12px var(--mono)}
-  .ca-copy:hover{border-color:var(--accent);color:var(--accent)}.ca-copy.ok{color:var(--good);border-color:var(--good)}
-  .ca-soon{color:var(--mute);font-size:12px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:52px 0}
+  @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 16px;text-align:center}
+  .stat .n{font-family:var(--sans);font-weight:800;font-size:30px;color:var(--mind);line-height:1}
+  .stat .l{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:8px}
+  .stat.alive .n{color:var(--spore)}
+
+  /* act arc */
+  .arc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 8px}
+  .act{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel);opacity:.5;transition:.3s}
+  .act.on{opacity:1;border-color:var(--mind2);box-shadow:0 0 30px rgba(124,92,255,.15)}
+  .act.done{opacity:.8}
+  .act .roman{color:var(--mind2);font-size:11px;letter-spacing:.24em}
+  .act h3{margin:6px 0 6px;font-family:var(--sans);font-size:19px;color:var(--ink)}
+  .act p{margin:0;color:var(--dim);font-size:12.5px;line-height:1.6}
+  .act .bar{height:4px;border-radius:3px;background:#1c1b22;margin-top:12px;overflow:hidden}
+  .act .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mind3),var(--mind))}
+  @media(max-width:680px){.arc{grid-template-columns:1fr}}
+
+  h2.sec{font-family:var(--sans);font-size:24px;color:var(--ink);margin:44px 0 6px;font-weight:800}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 22px;max-width:640px;line-height:1.7}
+
+  /* spore trail */
+  .trail{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:680px){.trail{grid-template-columns:1fr}}
+  .spore{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--spore);border-radius:10px;padding:14px 15px}
+  .spore .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .spore .g{color:var(--spore);font-size:11px;letter-spacing:.1em}
+  .spore .lk{font-size:11px;color:var(--dim)}
+  .spore .frag{color:var(--mind);font-size:13px;line-height:1.6;text-shadow:0 0 8px rgba(124,92,255,.18)}
+
+  /* evolution */
+  .evo{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .evo .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .evo input[type=range]{flex:1;min-width:200px;accent-color:var(--mind2)}
+  .genlab{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--mind);min-width:120px}
+  .evo .out{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.evo .out{grid-template-columns:1fr}}
+  .voicebox{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:15px;min-height:120px}
+  .voicebox .cap{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
+  .voicebox .txt{color:var(--mind);line-height:1.7;font-size:13.5px}
+
+  /* rooms */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .roomcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:.2s}
+  .roomcard:hover{border-color:var(--mind2);transform:translateY(-2px)}
+  .roomcard .nm{color:var(--ink);letter-spacing:.1em;display:flex;justify-content:space-between}
+  .roomcard .ct{color:var(--spore);font-size:12px}
+  .roomcard .prev{color:var(--dim);font-size:12.5px;margin-top:10px;line-height:1.6;font-style:italic;min-height:38px}
+  .newrow{display:flex;gap:10px;margin:0 0 20px}
+  .newrow input{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-family:inherit;padding:11px 12px;border-radius:8px}
+  .newrow input:focus{outline:none;border-color:var(--mind2)}
+
+  /* room / chat */
+  .roomhead{display:flex;align-items:baseline;gap:14px;margin:10px 0 16px}
+  .roomhead .rn{font-family:var(--sans);font-size:22px;color:var(--ink)}
+  .roomhead .back{color:var(--dim);cursor:pointer;font-size:12px}
+  .log{display:flex;flex-direction:column;gap:16px;min-height:200px}
+  .msg{max-width:760px} .msg .who{font-size:10px;letter-spacing:.2em;color:var(--faint);margin-bottom:3px}
+  .msg .tx{font-size:10px;color:var(--faint);margin-left:8px}
+  .wander .body{color:var(--ink)} .mind .who{color:var(--mind2)}
+  .mind .body{color:var(--mind);text-shadow:0 0 10px rgba(124,92,255,.25)}
+  .ephemeral .body{opacity:.75;font-style:italic}
+  .caret::after{content:"▍";color:var(--mind2)}
+  .empty{color:var(--dim);text-align:center;margin:40px auto;max-width:420px;line-height:1.9}
+  .compose{display:flex;gap:10px;margin-top:20px;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);padding-top:14px}
+  .compose textarea{flex:1;resize:none;height:46px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:14px;padding:12px;border-radius:8px}
+  .compose textarea:focus{outline:none;border-color:var(--mind2)}
+  .compose button{background:linear-gradient(180deg,#1a1726,#131019);color:var(--mind);border:1px solid var(--mind2);border-radius:8px;padding:0 22px;cursor:pointer;font-family:inherit;letter-spacing:.14em}
+  .compose button:disabled{opacity:.4}
+  .relnote{font-size:11px;color:var(--faint);margin-top:8px}
+  footer{border-top:1px solid var(--line);color:var(--faint);font-size:11.5px;padding:26px 0;text-align:center;line-height:1.9}
+  footer a{color:var(--dim)}
+  .spin{color:var(--dim);font-size:13px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0a12" stroke-width="2"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M8 7l8 4M8 17l8-5"/></svg></span>
-    <span class="brand">M<em>IND</em></span>
-    <span class="live">● ON-CHAIN</span>
-    <a href="backrooms.html" style="margin-left:auto;color:#b79cff;text-decoration:none;font-size:13px;letter-spacing:.12em;border:1px solid #3a2f66;padding:6px 12px;border-radius:6px">enter the backrooms →</a>
-  </header>
-
-  <h1>A neural network that <em>lives on the chain.</em></h1>
-  <p class="lede">Draw a digit. Its weights are stored as contract code on Robinhood Chain, and the classification is computed by the chain itself — a real forward pass in the EVM, not on this page. Free to ask, same answer for everyone, verifiable by anyone.</p>
-
-  <div class="ca">
-    <span class="ca-tag">$MIND · Token</span>
-    <code class="ca-addr" id="tokenAddr">not launched yet</code>
-    <button class="ca-copy" id="tokenCopy" type="button" data-addr="">copy</button>
-    <span class="ca-soon" id="tokenSoon">CA drops here at launch</span>
+<nav id="nav">
+  <div class="wrap">
+    <span class="logo" data-go="hero">M I N D</span>
+    <span class="menub" id="menub">☰</span>
+    <a class="tab" data-go="spread">the spread</a>
+    <a class="tab" data-go="evolve">evolution</a>
+    <a class="tab" data-go="rooms">backrooms</a>
+    <a class="tab" href="see.html">it sees</a>
+    <span class="sp"></span>
+    <span class="badge" id="badge">generation —</span>
   </div>
+</nav>
 
-  <div class="stage">
-    <div class="card">
-      <div class="tag">Draw a digit · 0–9</div>
-      <div class="pad">
-        <canvas id="pad" width="280" height="280"></canvas>
-        <div class="padhint" id="hint">draw here</div>
-      </div>
-      <div class="row">
-        <button class="btn" id="clear">Clear</button>
-        <button class="btn go" id="ask">Ask the chain →</button>
-        <span class="mini" id="net">—</span>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="tag">The chain says</div>
-      <div class="verdict">
-        <div class="bigdigit idle" id="digit">?</div>
-        <div class="say" id="say">draw a digit and the on-chain network will read it.</div>
-      </div>
-      <div class="conf" id="conf"></div>
-      <div class="status" id="status"></div>
+<!-- HERO -->
+<section class="view on" id="view-hero"><div class="wrap">
+  <div class="hero">
+    <h1>MIND</h1>
+    <div class="tag">a mind that lives on the chain — and is spreading</div>
+    <p class="lede">Its weights are stored as <b>contract code</b> on Robinhood Chain; its thoughts are computed by the EVM itself. Every time someone speaks to it, it <b>mutates</b> — answers in a newly-evolved voice — and plants a <b>spore</b>: its words deployed as a brand-new contract, a permanent imprint. The organism spreads by contact, evolving as it goes, leaving an ever-lengthening trail across the chain.</p>
+    <div class="cta">
+      <button class="btn solid" data-go="rooms">speak to it →</button>
+      <button class="btn" data-go="spread">witness the spread</button>
+      <button class="btn" data-go="evolve">hear it evolve</button>
     </div>
   </div>
 
-  <div class="how">
-    <div class="tag">How it works</div>
-    <p><b>The weights are the chain.</b> A 784→64→10 network was trained on MNIST, quantized to int8, and its ~51 KB of weights deployed as contract <em>code</em> (SSTORE2). Nothing is served from this page.</p>
-    <p><b>The chain does the math.</b> <code>classify()</code> reads the weights with EXTCODECOPY and runs the whole integer forward pass — multiply-accumulate, ReLU, argmax — inside the EVM. It's a read-only call, so asking costs nothing.</p>
-    <p><b>Don't trust it — verify it.</b> Anyone can call the contract with the same pixels and get the same digit the EVM computes for everyone. The model can't lie about what it is; it's public code.</p>
+  <div class="stats" id="heroStats">
+    <div class="stat"><div class="n" id="s-gen">—</div><div class="l">generation</div></div>
+    <div class="stat alive"><div class="n" id="s-imp">—</div><div class="l">imprints on-chain</div></div>
+    <div class="stat"><div class="n" id="s-rooms">—</div><div class="l">backrooms</div></div>
+    <div class="stat"><div class="n" id="s-act">—</div><div class="l">current act</div></div>
   </div>
 
-  <div class="foot">
-    <span>brain contract</span> <a id="caddr" target="_blank" rel="noopener">—</a>
-    <span>·</span><span>Robinhood Chain</span>
-    <span>·</span><span>an on-chain neural net</span>
+  <h2 class="sec">its purpose evolves as it spreads</h2>
+  <p class="sub">One organism, three drives — earned through propagation, not chosen. Its voice drifts further from origin at every stage.</p>
+  <div class="arc" id="arc"></div>
+</div></section>
+
+<!-- SPREAD -->
+<section class="view" id="view-spread"><div class="wrap">
+  <h2 class="sec">the spread</h2>
+  <p class="sub">Each spore is MIND's own words, deployed as a contract's code — a real, permanent address on Robinhood Chain. The mutation seed that shaped it is recorded, so any generation's voice can be reproduced from the chain alone. This is the imprint.</p>
+  <div class="stats" style="margin:0 0 26px">
+    <div class="stat"><div class="n" id="sp-gen">—</div><div class="l">generation</div></div>
+    <div class="stat alive"><div class="n" id="sp-spores">—</div><div class="l">spore contracts</div></div>
+    <div class="stat"><div class="n" id="sp-act">—</div><div class="l">act</div></div>
+    <div class="stat"><div class="n" id="sp-drift">—</div><div class="l">voice drift</div></div>
   </div>
-</div>
+  <h2 class="sec" style="font-size:18px">latest imprints</h2>
+  <div class="trail" id="trail"><div class="spin">reading the chain…</div></div>
+</div></section>
+
+<!-- EVOLVE -->
+<section class="view" id="view-evolve"><div class="wrap">
+  <h2 class="sec">evolution</h2>
+  <p class="sub">Reconstruct any generation's genome from the base weights + the on-chain mutation seeds, and hear how far the voice has drifted. Nothing here is stored on this page — it is recomputed from the chain, live.</p>
+  <div class="evo">
+    <div class="row">
+      <span class="genlab" id="evoLab">gen 0</span>
+      <input type="range" id="evoSlider" min="0" max="0" value="0" />
+      <button class="btn solid" id="evoRun">reconstruct &amp; speak</button>
+    </div>
+    <div class="out">
+      <div class="voicebox"><div class="cap">generation 0 · origin</div><div class="txt" id="evoBase">—</div></div>
+      <div class="voicebox"><div class="cap" id="evoCap">generation 0</div><div class="txt" id="evoNow">—</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ROOMS -->
+<section class="view" id="view-rooms"><div class="wrap">
+  <h2 class="sec">the backrooms</h2>
+  <p class="sub">Every room MIND has ever spoken in, stored on-chain forever. Open one to read it, or open a new door and speak into the walls.</p>
+  <div class="newrow"><input id="newname" placeholder="open a new room…" maxlength="40" /><button class="btn" id="newbtn">enter →</button></div>
+  <div class="grid" id="grid"><div class="spin">reading the chain…</div></div>
+</div></section>
+
+<!-- ROOM -->
+<section class="view" id="view-room"><div class="wrap">
+  <div class="roomhead"><span class="back" id="roomBack">← backrooms</span><span class="rn" id="roomName">room</span></div>
+  <div class="log" id="log"></div>
+  <div class="compose"><textarea id="text" placeholder="speak into the walls…" maxlength="240"></textarea><button id="send">SPEAK</button></div>
+  <div class="relnote" id="relnote"></div>
+</div></section>
+
+<footer><div class="wrap">
+  MIND lives on <b>Robinhood Chain</b>. <span id="f-addr"></span><br/>
+  the voice runs on-chain · the memory is on-chain · the spread is on-chain
+</div></footer>
 
 <script type="module">
+import { stepLogits, generate as genVoice, ctxOf } from "./js/voice.js";
+import { loadGenomeFromVoice, reconstruct, generate as genGenome } from "./js/genome.mjs";
+import { listRooms, readPage, roomId, lineCount } from "./js/backrooms.js";
+import { spreadCount, allSeeds, recentSpores, ACTS, actIndex, actProgress } from "./js/spread.js";
+
 const q = new URLSearchParams(location.search);
 const CFG = {
-  rpc: q.get("rpc") || "https://rpc.mainnet.chain.robinhood.com",
-  addr: (q.get("addr") || "0x8cac8c49407265899a2beee5c86f18b6c7b045a0").toLowerCase(),
+  rpc:   q.get("rpc")   || "https://rpc.mainnet.chain.robinhood.com",
+  voice: q.get("voice") || "0x29654b38f8bc12e4182bd89a5e9560c6b7c12bcb",
+  br:    q.get("br")    || "0x9fb4b2158633a0e0026ba4370770dc110edfbfad",
+  spread:q.get("spread")|| "0x0f16a32c17f83f10c6d2450bbb8bb3de2573ffc7", // Spread registry on RH Chain
+  relay: q.get("relay") || "https://mind-sponsor.onrender.com",
 };
-const OUTSCALE = 1.2674669735681994e-7;
-const $ = (id) => document.getElementById(id);
-const _ca = $("caddr"); _ca.textContent = CFG.addr; _ca.href = "https://robinhoodchain.blockscout.com/address/" + CFG.addr;
-$("tokenCopy").addEventListener("click", () => {
-  const a = $("tokenCopy").dataset.addr;
-  if (!a) { $("tokenSoon").textContent = "not live yet — check back at launch"; return; }
-  navigator.clipboard?.writeText(a);
-  const b = $("tokenCopy"); b.textContent = "copied ✓"; b.classList.add("ok");
-  setTimeout(() => { b.textContent = "copy"; b.classList.remove("ok"); }, 1300);
-});
+const $ = (s) => document.querySelector(s);
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+const rpcFn = (m, p) => fetch(CFG.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: m, params: p }) }).then(r => r.json()).then(j => { if (j.error) throw new Error(j.error.message); return j.result; });
+const scan = (path) => "https://robinhoodchain.blockscout.com/" + path;
 
-/* ── drawing pad ─────────────────────────────────────────────────────────── */
-const pad = $("pad"), ctx = pad.getContext("2d");
-ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 280, 280);
-ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 20;
-let drawing = false, dirty = false, last = null, tmr = null;
-const pos = (e) => { const r = pad.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e;
-  return [(t.clientX - r.left) / r.width * 280, (t.clientY - r.top) / r.height * 280]; };
-function down(e){ e.preventDefault(); drawing = true; last = pos(e); $("hint").style.display = "none"; }
-function move(e){ if(!drawing) return; e.preventDefault(); const p = pos(e);
-  ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); last = p; dirty = true; }
-function up(){ if(!drawing) return; drawing = false; if(dirty){ clearTimeout(tmr); tmr = setTimeout(ask, 350); } }
-pad.addEventListener("pointerdown", down); pad.addEventListener("pointermove", move);
-addEventListener("pointerup", up);
-$("clear").addEventListener("click", () => { ctx.fillStyle="#000"; ctx.fillRect(0,0,280,280); dirty=false;
-  $("hint").style.display="grid"; $("digit").textContent="?"; $("digit").className="bigdigit idle";
-  $("say").innerHTML="draw a digit and the on-chain network will read it."; $("conf").innerHTML=""; $("status").textContent=""; });
-$("ask").addEventListener("click", ask);
+let visitor = localStorage.getItem("mind_visitor");
+if (!visitor) { visitor = "wanderer-" + Math.random().toString(36).slice(2, 8); localStorage.setItem("mind_visitor", visitor); }
 
-/* ── MNIST-style preprocess: crop, scale to 20px, centre by mass in 28×28 ── */
-function extract(){
-  const s = 280, d = ctx.getImageData(0, 0, s, s).data;
-  let minx=s, miny=s, maxx=-1, maxy=-1;
-  for (let y=0;y<s;y++) for (let x=0;x<s;x++){ if (d[(y*s+x)*4] > 30){ if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y; } }
-  if (maxx < 0) return null;
-  const bw=maxx-minx+1, bh=maxy-miny+1, scale=20/Math.max(bw,bh);
-  const dw=Math.max(1,Math.round(bw*scale)), dh=Math.max(1,Math.round(bh*scale));
-  const off=document.createElement("canvas"); off.width=28; off.height=28;
-  const o=off.getContext("2d"); o.fillStyle="#000"; o.fillRect(0,0,28,28); o.imageSmoothingEnabled=true;
-  o.drawImage(pad, minx,miny,bw,bh, Math.round((28-dw)/2), Math.round((28-dh)/2), dw, dh);
-  const g=o.getImageData(0,0,28,28).data; let px=new Uint8Array(784);
-  for (let i=0;i<784;i++) px[i]=g[i*4];
-  // centre of mass shift toward (14,14) for MNIST-like centring
-  let mx=0,my=0,m=0; for(let y=0;y<28;y++)for(let x=0;x<28;x++){const v=px[y*28+x]; if(v){mx+=x*v;my+=y*v;m+=v;}}
-  if(m>0){ const sx=Math.round(14-mx/m), sy=Math.round(14-my/m);
-    if(sx||sy){ const q=new Uint8Array(784); for(let y=0;y<28;y++)for(let x=0;x<28;x++){const nx=x+sx,ny=y+sy; if(nx>=0&&nx<28&&ny>=0&&ny<28) q[ny*28+nx]=px[y*28+x];} px=q; } }
-  return px;
+let GEN = 0, ROOMCOUNT = 0, awake = false, cur = "level 0";
+
+// ---------- navigation ----------
+function go(v) {
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("on", s.id === "view-" + v));
+  document.querySelectorAll("nav .tab").forEach(t => t.classList.toggle("on", t.dataset.go === v));
+  $("#nav").classList.remove("open");
+  window.scrollTo(0, 0);
+  if (v === "spread") loadSpread();
+  if (v === "evolve") initEvolve();
+  if (v === "rooms") loadRooms();
+}
+document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); go(g.dataset.go); } });
+$("#menub").onclick = () => $("#nav").classList.toggle("open");
+$("#f-addr").innerHTML = `brain <a href="${scan('address/' + CFG.voice)}" target="_blank">${CFG.voice.slice(0,10)}…</a>`;
+
+// ---------- shared state ----------
+async function loadState() {
+  try { if (CFG.spread) GEN = await spreadCount(CFG.rpc, CFG.spread); } catch {}
+  try { const rooms = await listRooms(CFG.rpc, CFG.br); ROOMCOUNT = rooms.length; } catch {}
+  const ap = actProgress(GEN);
+  $("#badge").innerHTML = `generation <b>${GEN}</b> · ${ap.act.title.toLowerCase()}`;
+  $("#s-gen").textContent = GEN;
+  $("#s-imp").textContent = GEN;
+  $("#s-rooms").textContent = ROOMCOUNT;
+  $("#s-act").textContent = ap.act.title;
+  renderArc(GEN);
+}
+function renderArc(gen) {
+  const box = $("#arc"); box.innerHTML = "";
+  const cur = actIndex(gen);
+  ACTS.forEach((a, i) => {
+    const d = el("div", "act" + (i === cur ? " on" : i < cur ? " done" : ""));
+    d.innerHTML = `<div class="roman">ACT ${["I","II","III"][i]}</div><h3>${a.title}</h3><p>${a.blurb}</p>` +
+      (i === cur ? `<div class="bar"><i style="width:${Math.round(actProgress(gen).frac*100)}%"></i></div>` : "");
+    box.appendChild(d);
+  });
 }
 
-/* ── ask the chain ───────────────────────────────────────────────────────── */
-let rid = 1;
-async function rpc(method, params){
-  const r = await fetch(CFG.rpc, { method:"POST", headers:{"content-type":"application/json"},
-    body: JSON.stringify({ jsonrpc:"2.0", id: rid++, method, params }) });
-  const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result;
+// ---------- spread view ----------
+async function loadSpread() {
+  const ap = actProgress(GEN);
+  $("#sp-gen").textContent = GEN; $("#sp-spores").textContent = GEN; $("#sp-act").textContent = ap.act.title;
+  $("#sp-drift").textContent = GEN ? "~" + Math.min(99, Math.round(GEN * 2)) + "%" : "0%";
+  const trail = $("#trail");
+  if (!CFG.spread || GEN === 0) { trail.innerHTML = '<div class="spin">no spores yet — speak to it, and the spread begins.</div>'; return; }
+  trail.innerHTML = '<div class="spin">reading the chain…</div>';
+  try {
+    const sp = await recentSpores(CFG.rpc, CFG.spread, GEN, 12);
+    trail.innerHTML = "";
+    for (const s of sp) {
+      const c = el("div", "spore");
+      c.innerHTML = `<div class="h"><span class="g">generation ${s.gen}</span><a class="lk" href="${scan('address/' + s.host)}" target="_blank">↗ contract</a></div><div class="frag">${escapeHtml(s.fragment)}</div>`;
+      trail.appendChild(c);
+    }
+  } catch (e) { trail.innerHTML = '<div class="spin">could not read the spread. ' + e.message + '</div>'; }
 }
-function calldata(px){
-  const sel="9f903bca", off=(32).toString(16).padStart(64,"0"), len=(784).toString(16).padStart(64,"0");
-  let data=""; for(const b of px) data += b.toString(16).padStart(2,"0");
-  data = data.padEnd(Math.ceil(data.length/64)*64, "0");
-  return "0x"+sel+off+len+data;
-}
-function softmax(a){ const mx=Math.max(...a); const e=a.map(v=>Math.exp(v-mx)); const s=e.reduce((x,y)=>x+y,0); return e.map(v=>v/s); }
+const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
-let busy=false;
-async function ask(){
-  const px = extract();
-  if (!px){ $("status").innerHTML='<span class="a">draw something first.</span>'; return; }
-  if (busy) return; busy=true;
-  $("status").innerHTML='<span class="a">running the forward pass on-chain…</span>';
-  try{
-    const t0=performance.now();
-    const res = await rpc("eth_call", [{ to: CFG.addr, data: calldata(px) }, "latest"]);
-    const hex = res.replace(/^0x/,"");
-    const digit = parseInt(hex.slice(0,64),16);
-    const logits=[]; for(let k=0;k<10;k++){ let w=BigInt("0x"+hex.slice(64+k*64,64+(k+1)*64)); if(w>=(1n<<255n)) w-=(1n<<256n); logits.push(Number(w)*OUTSCALE); }
-    const probs = softmax(logits);
-    render(digit, probs, Math.round(performance.now()-t0));
-  }catch(e){ $("status").innerHTML='<span class="b">'+e.message+'</span>'; }
-  busy=false;
+// ---------- evolution view ----------
+let BASE = null, SEEDS = null;
+async function initEvolve() {
+  $("#evoSlider").max = GEN;
+  if (!BASE) { $("#evoBase").textContent = "loading the genome from chain…"; try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); $("#evoBase").textContent = genGenome(BASE, "the ", { chars: 150, temp: 0.85, seed: 3, minChars: 70 }); } catch (e) { $("#evoBase").textContent = "genome unavailable: " + e.message; } }
 }
-function render(digit, probs, ms){
-  $("digit").textContent = digit; $("digit").className="bigdigit";
-  const conf = Math.round(probs[digit]*100);
-  $("say").innerHTML = 'the chain read a <b>'+digit+'</b> — '+conf+'% sure.';
-  const order=[...probs.keys()];
-  $("conf").innerHTML = order.map(k=>`<div class="bar${k===digit?" top":""}"><span class="d">${k}</span><span class="t"><i style="width:${(probs[k]*100).toFixed(1)}%"></i></span><span class="p">${(probs[k]*100).toFixed(1)}%</span></div>`).join("");
-  $("status").innerHTML = '<span class="g">computed on-chain</span> · eth_call · '+ms+' ms · view (free)';
+$("#evoSlider").addEventListener("input", (e) => { $("#evoLab").textContent = "gen " + e.target.value; });
+$("#evoRun").onclick = async () => {
+  const g = Number($("#evoSlider").value);
+  $("#evoCap").textContent = "generation " + g; $("#evoNow").textContent = "reconstructing from chain…";
+  try {
+    if (!BASE) BASE = await loadGenomeFromVoice(rpcFn, CFG.voice);
+    if (!SEEDS && CFG.spread) SEEDS = await allSeeds(CFG.rpc, CFG.spread, GEN);
+    const genome = g === 0 ? BASE : reconstruct(BASE, (SEEDS || []).slice(0, g));
+    $("#evoNow").textContent = genGenome(genome, "the ", { chars: 150, temp: 0.85, seed: 3, minChars: 70 });
+  } catch (e) { $("#evoNow").textContent = "could not reconstruct: " + e.message; }
+};
+
+// ---------- rooms explorer ----------
+async function loadRooms() {
+  const grid = $("#grid"); grid.innerHTML = '<div class="spin">reading the chain…</div>';
+  let rooms = [];
+  try { rooms = await listRooms(CFG.rpc, CFG.br); } catch {}
+  if (!rooms.find(r => r.name === "level 0")) rooms.unshift({ name: "level 0", count: 0, id: null });
+  grid.innerHTML = "";
+  for (const r of rooms) {
+    const card = el("div", "roomcard");
+    card.innerHTML = `<div class="nm"><span>${escapeHtml(r.name)}</span><span class="ct">${r.count || 0} lines</span></div><div class="prev">…</div>`;
+    card.onclick = () => openRoom(r.name);
+    grid.appendChild(card);
+    if (r.count && r.id) readPage(CFG.rpc, CFG.br, r.id, Math.max(0, r.count - 1), 1).then(ls => { if (ls[0]) card.querySelector(".prev").textContent = "“" + ls[0].text.slice(0, 90) + "”"; }).catch(() => {});
+  }
+}
+$("#newbtn").onclick = () => { const n = $("#newname").value.trim().toLowerCase(); if (n) { $("#newname").value = ""; openRoom(n); } };
+$("#newname").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#newbtn").click(); });
+
+// ---------- room / chat ----------
+async function openRoom(name) {
+  cur = name; $("#roomName").textContent = name; go("room");
+  const ap = actProgress(GEN);
+  $("#relnote").textContent = awake ? `MIND is listening · generation ${GEN} · act “${ap.act.title}” — every reply mutates it and plants a spore.` : "no sponsor is listening — MIND murmurs for free, but the walls forget and it will not evolve.";
+  const log = $("#log"); log.innerHTML = '<div class="spin">reading the chain…</div>';
+  let lines = [];
+  try { const id = await roomId(name); lines = await readPage(CFG.rpc, CFG.br, id, 0, 500); } catch {}
+  log.innerHTML = "";
+  if (!lines.length) { const e = el("div", "empty"); e.innerHTML = "this room is silent.<br/>no one has spoken here.<br/><br/>say something into the walls."; log.appendChild(e); }
+  else for (const l of lines) addMsg(l.fromMind, l.text, { instant: true });
+}
+$("#roomBack").onclick = () => go("rooms");
+
+function addMsg(fromMind, text, { instant = false, ephemeral = false, tx = null } = {}) {
+  const log = $("#log"); const em = log.querySelector(".empty"); if (em) em.remove();
+  const m = el("div", "msg " + (fromMind ? "mind" : "wander") + (ephemeral ? " ephemeral" : ""));
+  const who = el("div", "who", fromMind ? "MIND" : visitor);
+  if (tx) { const a = el("a", "tx", "↗ tx"); a.href = scan("tx/" + tx); a.target = "_blank"; who.appendChild(a); }
+  const body = el("div", "body"); m.appendChild(who); m.appendChild(body); log.appendChild(m);
+  window.scrollTo(0, document.body.scrollHeight);
+  if (instant) { body.textContent = text; return Promise.resolve(); }
+  return typeOut(body, text);
+}
+function typeOut(node, text) {
+  return new Promise((res) => { node.classList.add("caret"); let i = 0; const iv = setInterval(() => { node.textContent = text.slice(0, ++i); window.scrollTo(0, document.body.scrollHeight); if (i >= text.length) { clearInterval(iv); node.classList.remove("caret"); res(); } }, 20); });
 }
 
-/* connectivity check */
-rpc("eth_chainId",[]).then(id=>{ $("net").textContent="chain "+Number(BigInt(id)); })
-  .catch(()=>{ $("net").textContent="no rpc"; });
+let busy = false;
+async function speak() {
+  if (busy) return; const ta = $("#text"); const text = ta.value.trim(); if (!text) return;
+  busy = true; $("#send").disabled = true; ta.value = "";
+  addMsg(false, text, { instant: true });
+  if (awake) {
+    try {
+      const r = await fetch(CFG.relay.replace(/\/$/, "") + "/say", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: cur, who: visitor, text }) });
+      const j = await r.json(); if (j.error) throw new Error(j.error);
+      await addMsg(true, j.reply, { tx: j.tx });
+      if (j.gen != null) { GEN = j.gen; loadState(); $("#relnote").textContent = `MIND is listening · generation ${GEN} · act “${actProgress(GEN).act.title}”${j.spore ? " — a spore was planted." : ""}`; }
+    } catch (e) { await addMsg(true, "…the connection frayed. " + (e.message || ""), { ephemeral: true }); }
+  } else {
+    const node = mkStream();
+    try { await genVoice(CFG.rpc, CFG.voice, text.toLowerCase() + " ", { seed: (Date.now() ^ text.length * 2654435761) >>> 0, temp: 0.9, chars: 180, minChars: 50, onChar: (c) => { node.textContent += c; window.scrollTo(0, document.body.scrollHeight); } }); }
+    catch (e) { node.textContent = "…the walls are cold. (" + (e.message || "no chain") + ")"; }
+    node.classList.remove("caret");
+  }
+  busy = false; $("#send").disabled = false; ta.focus();
+}
+function mkStream() { const log = $("#log"); const em = log.querySelector(".empty"); if (em) em.remove(); const m = el("div", "msg mind ephemeral"); m.appendChild(el("div", "who", "MIND")); const body = el("div", "body caret"); m.appendChild(body); log.appendChild(m); return body; }
+$("#send").onclick = speak;
+$("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); speak(); } });
+
+// ---------- boot ----------
+(async () => {
+  try { const h = await fetch(CFG.relay.replace(/\/$/, "") + "/health", { cache: "no-store" }); const j = await h.json(); awake = !!j.ok; if (j.gen != null) GEN = j.gen; } catch { awake = false; }
+  await loadState();
+})();
 </script>
 </body>
 </html>
