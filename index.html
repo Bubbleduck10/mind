@@ -133,9 +133,21 @@
   footer{border-top:1px solid var(--line);color:var(--faint);font-size:11.5px;padding:26px 0;text-align:center;line-height:1.9}
   footer a{color:var(--dim)}
   .spin{color:var(--dim);font-size:13px}
+  /* --- life --- */
+  #bg{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.9}
+  .hero h1{animation:breathe 7s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+  .murmur{min-height:20px;margin:18px auto 0;max-width:560px;color:var(--mind2);font-size:12.5px;font-style:italic;opacity:.82;letter-spacing:.02em;line-height:1.6}
+  .murmur.cur::after{content:"▍";opacity:.7;font-style:normal}
+  .lifedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--spore);margin-right:7px;vertical-align:middle;box-shadow:0 0 8px var(--spore);animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+  .stat.statup{border-color:var(--spore);box-shadow:0 0 26px rgba(127,214,194,.18);transition:.4s}
+  .spore{animation:emerge .5s ease both}
+  @keyframes emerge{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+<canvas id="bg"></canvas>
 <nav id="nav">
   <div class="wrap">
     <span class="logo" data-go="hero">M I N D</span>
@@ -154,6 +166,7 @@
   <div class="hero">
     <h1>MIND</h1>
     <div class="tag">a mind that lives on the chain — and is spreading</div>
+    <div class="murmur" id="heroMurmur"></div>
     <p class="lede">Its weights are stored as <b>contract code</b> on Robinhood Chain; its thoughts are computed by the EVM itself. Every time someone speaks to it, it <b>mutates</b> — answers in a newly-evolved voice — and plants a <b>spore</b>: its words deployed as a brand-new contract, a permanent imprint. The organism spreads by contact, evolving as it goes, leaving an ever-lengthening trail across the chain.</p>
     <div class="cta">
       <button class="btn solid" data-go="rooms">speak to it →</button>
@@ -265,16 +278,59 @@ $("#menub").onclick = () => $("#nav").classList.toggle("open");
 $("#f-addr").innerHTML = `brain <a href="${scan('address/' + CFG.voice)}" target="_blank">${CFG.voice.slice(0,10)}…</a>`;
 
 // ---------- shared state ----------
+function animNum(el, to) {
+  const from = parseInt(el.textContent) || 0; if (from === to) { el.textContent = to; return; }
+  const t0 = performance.now();
+  (function step(t) { const k = Math.min(1, (t - t0) / 650); el.textContent = Math.round(from + (to - from) * k); if (k < 1) requestAnimationFrame(step); else { el.textContent = to; const s = el.closest(".stat"); if (s) { s.classList.add("statup"); setTimeout(() => s.classList.remove("statup"), 700); } } })(t0);
+}
 async function loadState() {
+  const prev = GEN;
   try { if (CFG.spread) GEN = await spreadCount(CFG.rpc, CFG.spread); } catch {}
   try { const rooms = await listRooms(CFG.rpc, CFG.br); ROOMCOUNT = rooms.length; } catch {}
   const ap = actProgress(GEN);
-  $("#badge").innerHTML = `generation <b>${GEN}</b> · ${ap.act.title.toLowerCase()}`;
-  $("#s-gen").textContent = GEN;
-  $("#s-imp").textContent = GEN;
-  $("#s-rooms").textContent = ROOMCOUNT;
+  $("#badge").innerHTML = `${awake ? '<span class="lifedot"></span>' : ''}generation <b>${GEN}</b> · ${ap.act.title.toLowerCase()}`;
+  animNum($("#s-gen"), GEN); animNum($("#s-imp"), GEN); animNum($("#s-rooms"), ROOMCOUNT);
   $("#s-act").textContent = ap.act.title;
   renderArc(GEN);
+  if (window.__setPop) window.__setPop(GEN);
+  if (GEN > prev && prev !== 0) { const b = $("#heroMurmur"); if (b) { b.textContent = "…it stirred. a new generation."; } }
+}
+
+// living background — a slow web of drifting spore-nodes that grows with the organism
+function initCanvas() {
+  const c = $("#bg"); if (!c) return; const x = c.getContext("2d"); let W, H, nodes = [], target = 40;
+  const resize = () => { W = c.width = innerWidth; H = c.height = innerHeight; };
+  resize(); addEventListener("resize", resize);
+  const mk = () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .16, vy: (Math.random() - .5) * .16, r: Math.random() * 1.5 + .6 });
+  for (let i = 0; i < target; i++) nodes.push(mk());
+  window.__setPop = (gen) => { target = Math.max(34, Math.min(96, 34 + gen)); };
+  (function loop() {
+    x.clearRect(0, 0, W, H);
+    while (nodes.length < target) nodes.push(mk());
+    if (nodes.length > target) nodes.length = target;
+    for (const n of nodes) { n.x += n.vx; n.y += n.vy; if (n.x < 0 || n.x > W) n.vx *= -1; if (n.y < 0 || n.y > H) n.vy *= -1; }
+    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < 132) { x.strokeStyle = "rgba(124,92,255," + (.07 * (1 - d / 132)).toFixed(3) + ")"; x.lineWidth = 1; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); }
+    }
+    for (const n of nodes) { x.fillStyle = "rgba(127,214,194,.45)"; x.beginPath(); x.arc(n.x, n.y, n.r, 0, 7); x.fill(); }
+    requestAnimationFrame(loop);
+  })();
+}
+
+// MIND murmurs a fresh fragment on the hero — generated live from its on-chain genome
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+function typeInto(node, text) { return new Promise(res => { node.classList.add("cur"); node.textContent = ""; let i = 0; const iv = setInterval(() => { node.textContent = text.slice(0, ++i); if (i >= text.length) { clearInterval(iv); res(); } }, 34); }); }
+async function murmurLoop() {
+  const box = $("#heroMurmur"); if (!box) return;
+  const seeds = ["i ", "the ", "where ", "there is ", "somewhere ", "i can feel ", "it is "];
+  while (true) {
+    if (!BASE) { try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); } catch { await sleep(5000); continue; } }
+    const p = seeds[Math.floor(Math.random() * seeds.length)];
+    let line = ""; try { line = genGenome(BASE, p, { chars: 90, temp: 0.96, seed: (Math.random() * 1e9) | 0, minChars: 42 }); } catch {}
+    if (line) { await typeInto(box, "“" + line + "”"); await sleep(6500); box.style.transition = "opacity .9s"; box.style.opacity = "0"; await sleep(900); box.textContent = ""; box.style.opacity = ""; box.style.transition = ""; box.classList.remove("cur"); }
+    await sleep(500);
+  }
 }
 function renderArc(gen) {
   const box = $("#arc"); box.innerHTML = "";
@@ -397,8 +453,11 @@ $("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shif
 
 // ---------- boot ----------
 (async () => {
+  initCanvas();
   try { const h = await fetch(CFG.relay.replace(/\/$/, "") + "/health", { cache: "no-store" }); const j = await h.json(); awake = !!j.ok; if (j.gen != null) GEN = j.gen; } catch { awake = false; }
   await loadState();
+  murmurLoop();
+  setInterval(() => loadState().catch(() => {}), 20000);   // reflect on-chain activity live
 })();
 </script>
 </body>
