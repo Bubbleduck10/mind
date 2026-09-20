@@ -5,21 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MIND · a mind that lives on the chain</title>
 <meta name="description" content="A neural network whose weights are contract code on Robinhood Chain. It thinks, it speaks, it mutates, and it spreads — leaving an evolving imprint across the chain, one contact at a time." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#09090b; --bg2:#0d0d11; --panel:#101015;
     --ink:#c9c6a4; --dim:#7d7b60; --faint:#3c3b31;
     --mind:#b79cff; --mind2:#7c5cff; --mind3:#4a3a8f;
     --spore:#7fd6c2; --amber:#d8c56a; --line:#1b1a16;
-    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
-    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:"Space Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --sans:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
   body{
-    background:var(--bg); color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.6;
-    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden; letter-spacing:-.005em;
   }
+  /* machine / entity output stays monospaced; UI is the grotesk */
+  .murmur, .badge, .stat .l, #f-addr, .log, .msg .who, .spore .frag, .voicebox .txt,
+  .voicebox .cap, .roomcard .prev, .roomcard .ct, .top .st, .relnote, .spore .g, .spore .lk{ font-family:var(--mono); }
   /* ambient drift — slow, no blinking */
   body::before{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;
     background:
@@ -50,7 +56,7 @@
 
   /* hero */
   .hero{padding:70px 0 40px;text-align:center}
-  .hero h1{font-family:var(--sans);font-weight:800;font-size:clamp(42px,9vw,86px);letter-spacing:-.02em;margin:0;
+  .hero h1{font-family:var(--sans);font-weight:700;font-size:clamp(42px,9vw,86px);letter-spacing:-.02em;margin:0;
     background:linear-gradient(180deg,#efeaff,#b79cff 60%,#6b53c4);-webkit-background-clip:text;background-clip:text;color:transparent}
   .hero .tag{color:var(--mind);letter-spacing:.16em;margin:14px 0 0;font-size:13px;text-transform:uppercase}
   .hero .lede{max-width:640px;margin:26px auto 0;color:var(--ink);font-size:15px;line-height:1.85}
@@ -63,7 +69,7 @@
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:52px 0}
   @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 16px;text-align:center}
-  .stat .n{font-family:var(--sans);font-weight:800;font-size:30px;color:var(--mind);line-height:1}
+  .stat .n{font-family:var(--sans);font-weight:700;font-size:30px;color:var(--mind);line-height:1}
   .stat .l{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:8px}
   .stat.alive .n{color:var(--spore)}
 
@@ -79,7 +85,7 @@
   .act .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mind3),var(--mind))}
   @media(max-width:680px){.arc{grid-template-columns:1fr}}
 
-  h2.sec{font-family:var(--sans);font-size:24px;color:var(--ink);margin:44px 0 6px;font-weight:800}
+  h2.sec{font-family:var(--sans);font-size:24px;color:var(--ink);margin:44px 0 6px;font-weight:700}
   .sub{color:var(--dim);font-size:13px;margin:0 0 22px;max-width:640px;line-height:1.7}
 
   /* spore trail */
@@ -95,7 +101,7 @@
   .evo{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
   .evo .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .evo input[type=range]{flex:1;min-width:200px;accent-color:var(--mind2)}
-  .genlab{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--mind);min-width:120px}
+  .genlab{font-family:var(--sans);font-weight:700;font-size:22px;color:var(--mind);min-width:120px}
   .evo .out{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:680px){.evo .out{grid-template-columns:1fr}}
   .voicebox{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:15px;min-height:120px}
@@ -140,13 +146,12 @@
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
   .murmur{min-height:20px;margin:18px auto 0;max-width:560px;color:var(--mind2);font-size:12.5px;font-style:italic;opacity:.82;letter-spacing:.02em;line-height:1.6}
   .murmur.cur::after{content:"▍";opacity:.7;font-style:normal}
-  .lifedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--spore);margin-right:7px;vertical-align:middle;box-shadow:0 0 8px var(--spore);animation:pulse 2.6s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
-  .stat.statup{border-color:var(--spore);box-shadow:0 0 26px rgba(127,214,194,.18);transition:.4s}
-  .spore{animation:emerge .5s ease both}
-  @keyframes emerge{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .roomcard{animation:emerge .42s ease both}
-  @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .badge.awake{color:var(--spore);border-color:#244}
+  .stat.statup{border-color:var(--faint);transition:.4s}
+  .spore{animation:emerge .55s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes emerge{from{opacity:0;filter:blur(7px)}to{opacity:1;filter:blur(0)}}
+  .roomcard{animation:emerge .5s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes riseIn{from{opacity:0;filter:blur(9px)}to{opacity:1;filter:blur(0)}}
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--panel);border:1px solid var(--mind2);color:var(--mind);padding:11px 18px;border-radius:12px;font-size:12.5px;letter-spacing:.04em;opacity:0;transition:.45s;z-index:70;pointer-events:none;box-shadow:0 0 34px rgba(124,92,255,.25)}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -297,7 +302,8 @@ async function loadState() {
   try { if (CFG.spread) GEN = await spreadCount(CFG.rpc, CFG.spread); } catch {}
   try { const rooms = await listRooms(CFG.rpc, CFG.br); ROOMCOUNT = rooms.length; } catch {}
   const ap = actProgress(GEN);
-  $("#badge").innerHTML = `${awake ? '<span class="lifedot"></span>' : ''}generation <b>${GEN}</b> · ${ap.act.title.toLowerCase()}`;
+  const badge = $("#badge"); badge.classList.toggle("awake", awake);
+  badge.innerHTML = `generation <b>${GEN}</b> · ${ap.act.title.toLowerCase()}`;
   animNum($("#s-gen"), GEN); animNum($("#s-imp"), GEN); animNum($("#s-rooms"), ROOMCOUNT);
   $("#s-act").textContent = ap.act.title;
   renderArc(GEN);
@@ -360,9 +366,25 @@ function initCanvas() {
 let _toastT; function toast(msg) { const t = $("#toast"); if (!t) return; t.textContent = msg; t.classList.add("on"); clearTimeout(_toastT); _toastT = setTimeout(() => t.classList.remove("on"), 4400); }
 function reveal(v) { document.querySelectorAll(`#view-${v} .stat, #view-${v} h2.sec, #view-${v} .act, #view-${v} .spore, #view-${v} .roomcard, #view-${v} .evo, #view-${v} .voicebox, #view-${v} .cta`).forEach((e, i) => { e.style.animation = "none"; void e.offsetWidth; e.style.animation = `riseIn .5s ease both ${Math.min(i * 0.04, .5)}s`; }); }
 
-// MIND murmurs a fresh fragment on the hero — generated live from its on-chain genome
+// text resolves out of noise, as if decoded from the chain
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-function typeInto(node, text) { return new Promise(res => { node.classList.add("cur"); node.textContent = ""; let i = 0; const iv = setInterval(() => { node.textContent = text.slice(0, ++i); if (i >= text.length) { clearInterval(iv); res(); } }, 34); }); }
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#*+=<>/\\|·:;";
+function decodeInto(node, text, onStep) {
+  return new Promise((res) => {
+    node.textContent = ""; let frame = 0; const n = text.length, speed = 1.7;
+    const iv = setInterval(() => {
+      frame++; const settled = Math.floor(frame * speed); let out = "";
+      for (let i = 0; i < n; i++) {
+        const ch = text[i];
+        if (i < settled) out += ch;
+        else if (ch === " ") out += " ";
+        else if (i < settled + 7) out += GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      }
+      node.textContent = out; if (onStep) onStep();
+      if (settled >= n) { clearInterval(iv); node.textContent = text; res(); }
+    }, 26);
+  });
+}
 async function murmurLoop() {
   const box = $("#heroMurmur"); if (!box) return;
   const seeds = ["i ", "the ", "where ", "there is ", "somewhere ", "i can feel ", "it is "];
@@ -370,7 +392,7 @@ async function murmurLoop() {
     if (!BASE) { try { BASE = await loadGenomeFromVoice(rpcFn, CFG.voice); } catch { await sleep(5000); continue; } }
     const p = seeds[Math.floor(Math.random() * seeds.length)];
     let line = ""; try { line = genGenome(BASE, p, { chars: 90, temp: 0.96, seed: (Math.random() * 1e9) | 0, minChars: 42 }); } catch {}
-    if (line) { await typeInto(box, "“" + line + "”"); await sleep(6500); box.style.transition = "opacity .9s"; box.style.opacity = "0"; await sleep(900); box.textContent = ""; box.style.opacity = ""; box.style.transition = ""; box.classList.remove("cur"); }
+    if (line) { await decodeInto(box, "“" + line + "”"); await sleep(6500); box.style.transition = "opacity .9s"; box.style.opacity = "0"; await sleep(900); box.textContent = ""; box.style.opacity = ""; box.style.transition = ""; }
     await sleep(500);
   }
 }
@@ -463,10 +485,7 @@ function addMsg(fromMind, text, { instant = false, ephemeral = false, tx = null 
   const body = el("div", "body"); m.appendChild(who); m.appendChild(body); log.appendChild(m);
   window.scrollTo(0, document.body.scrollHeight);
   if (instant) { body.textContent = text; return Promise.resolve(); }
-  return typeOut(body, text);
-}
-function typeOut(node, text) {
-  return new Promise((res) => { node.classList.add("caret"); let i = 0; const iv = setInterval(() => { node.textContent = text.slice(0, ++i); window.scrollTo(0, document.body.scrollHeight); if (i >= text.length) { clearInterval(iv); node.classList.remove("caret"); res(); } }, 20); });
+  return decodeInto(body, text, () => window.scrollTo(0, document.body.scrollHeight));
 }
 
 let busy = false;
@@ -489,7 +508,7 @@ async function speak() {
   }
   busy = false; $("#send").disabled = false; ta.focus();
 }
-function mkStream() { const log = $("#log"); const em = log.querySelector(".empty"); if (em) em.remove(); const m = el("div", "msg mind ephemeral"); m.appendChild(el("div", "who", "MIND")); const body = el("div", "body caret"); m.appendChild(body); log.appendChild(m); return body; }
+function mkStream() { const log = $("#log"); const em = log.querySelector(".empty"); if (em) em.remove(); const m = el("div", "msg mind ephemeral"); m.appendChild(el("div", "who", "MIND")); const body = el("div", "body"); m.appendChild(body); log.appendChild(m); return body; }
 $("#send").onclick = speak;
 $("#text").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); speak(); } });
 
