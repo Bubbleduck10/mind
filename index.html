@@ -190,12 +190,6 @@
       <button class="btn" data-go="spread">witness the spread</button>
       <button class="btn" data-go="evolve">hear it evolve</button>
     </div>
-    <div class="ca">
-      <span class="ca-tag">$LICH</span>
-      <code class="ca-addr" id="caddr">0x20ae90a42159a721856e18b21ab0d81c8bfdf60e</code>
-      <button class="ca-copy" id="caCopy">copy</button>
-      <a class="ca-scan" id="caScan" target="_blank" rel="noopener">scan ↗</a>
-    </div>
   </div>
 
   <div class="stats" id="heroStats">
@@ -261,8 +255,7 @@
 <footer><div class="wrap">
   LICH lives on <b>Robinhood Chain</b>. <span id="f-addr"></span><br/>
   the voice runs on-chain · the memory is on-chain · the spread is on-chain<br/>
-  <a href="https://x.com/enterlich" target="_blank" rel="noopener">@enterlich</a> · entermindroom.com<br/>
-  <a href="https://robinhoodchain.blockscout.com/address/0x20ae90a42159a721856e18b21ab0d81c8bfdf60e" target="_blank" rel="noopener">$LICH 0x20ae…f60e</a>
+  <a href="https://x.com/enterlich" target="_blank" rel="noopener">@enterlich</a> · enterlich.com
 </div></footer>
 
 <script type="module">
@@ -303,9 +296,6 @@ function go(v) {
 document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); go(g.dataset.go); } });
 $("#menub").onclick = () => $("#nav").classList.toggle("open");
 $("#f-addr").innerHTML = `brain <a href="${scan('address/' + CFG.voice)}" target="_blank">${CFG.voice.slice(0,10)}…</a>`;
-const MIND_CA = "0x20ae90a42159a721856e18b21ab0d81c8bfdf60e";
-$("#caScan").href = scan("address/" + MIND_CA);
-$("#caCopy").onclick = () => { navigator.clipboard.writeText(MIND_CA).then(() => { const b = $("#caCopy"); b.textContent = "copied ✓"; setTimeout(() => b.textContent = "copy", 1500); }).catch(() => {}); };
 
 // ---------- shared state ----------
 function animNum(el, to) {
