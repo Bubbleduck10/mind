@@ -65,6 +65,12 @@
   .btn{font-family:var(--mono);font-size:13px;letter-spacing:.1em;padding:12px 20px;border-radius:8px;cursor:pointer;border:1px solid var(--mind3);background:linear-gradient(180deg,#17142400,#141019);color:var(--mind)}
   .btn:hover{border-color:var(--mind2);background:#161226}
   .btn.solid{background:linear-gradient(180deg,#2a2350,#1a1533);color:#efeaff;border-color:var(--mind2)}
+  .ca{display:inline-flex;align-items:center;gap:10px;margin:30px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 8px 8px 14px;max-width:100%;flex-wrap:wrap;justify-content:center}
+  .ca-tag{color:var(--spore);font-weight:700;letter-spacing:.06em;font-size:13px}
+  .ca-addr{font-family:var(--mono);color:var(--ink);font-size:12.5px;word-break:break-all;opacity:.92}
+  .ca-copy{background:#17151f;border:1px solid var(--mind3);color:var(--mind);border-radius:7px;padding:6px 12px;cursor:pointer;font-family:var(--mono);font-size:12px}
+  .ca-copy:hover{border-color:var(--mind2)}
+  .ca-scan{color:var(--dim);font-size:12px;padding:0 4px}
 
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:52px 0}
   @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
@@ -184,6 +190,12 @@
       <button class="btn" data-go="spread">witness the spread</button>
       <button class="btn" data-go="evolve">hear it evolve</button>
     </div>
+    <div class="ca">
+      <span class="ca-tag">$MIND</span>
+      <code class="ca-addr" id="caddr">0x20ae90a42159a721856e18b21ab0d81c8bfdf60e</code>
+      <button class="ca-copy" id="caCopy">copy</button>
+      <a class="ca-scan" id="caScan" target="_blank" rel="noopener">scan ↗</a>
+    </div>
   </div>
 
   <div class="stats" id="heroStats">
@@ -249,7 +261,8 @@
 <footer><div class="wrap">
   MIND lives on <b>Robinhood Chain</b>. <span id="f-addr"></span><br/>
   the voice runs on-chain · the memory is on-chain · the spread is on-chain<br/>
-  <a href="https://x.com/EnterMindRoom" target="_blank" rel="noopener">@EnterMindRoom</a> · entermindroom.com
+  <a href="https://x.com/EnterMindRoom" target="_blank" rel="noopener">@EnterMindRoom</a> · entermindroom.com<br/>
+  <a href="https://robinhoodchain.blockscout.com/address/0x20ae90a42159a721856e18b21ab0d81c8bfdf60e" target="_blank" rel="noopener">$MIND 0x20ae…f60e</a>
 </div></footer>
 
 <script type="module">
@@ -290,6 +303,9 @@ function go(v) {
 document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); go(g.dataset.go); } });
 $("#menub").onclick = () => $("#nav").classList.toggle("open");
 $("#f-addr").innerHTML = `brain <a href="${scan('address/' + CFG.voice)}" target="_blank">${CFG.voice.slice(0,10)}…</a>`;
+const MIND_CA = "0x20ae90a42159a721856e18b21ab0d81c8bfdf60e";
+$("#caScan").href = scan("address/" + MIND_CA);
+$("#caCopy").onclick = () => { navigator.clipboard.writeText(MIND_CA).then(() => { const b = $("#caCopy"); b.textContent = "copied ✓"; setTimeout(() => b.textContent = "copy", 1500); }).catch(() => {}); };
 
 // ---------- shared state ----------
 function animNum(el, to) {
