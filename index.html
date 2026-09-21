@@ -455,7 +455,7 @@ async function loadRooms() {
   for (const r of rooms) {
     const card = el("div", "roomcard");
     card.innerHTML = `<div class="nm"><span>${escapeHtml(r.name)}</span><span class="ct">${r.count || 0} lines</span></div><div class="prev">…</div>`;
-    card.onclick = () => openRoom(r.name);
+    card.onclick = () => openRoom(r.name, r.id);
     grid.appendChild(card);
     if (r.count && r.id) readPage(CFG.rpc, CFG.br, r.id, Math.max(0, r.count - 1), 1).then(ls => { if (ls[0]) card.querySelector(".prev").textContent = "“" + ls[0].text.slice(0, 90) + "”"; }).catch(() => {});
   }
@@ -464,16 +464,29 @@ $("#newbtn").onclick = () => { const n = $("#newname").value.trim().toLowerCase(
 $("#newname").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#newbtn").click(); });
 
 // ---------- room / chat ----------
-async function openRoom(name) {
+async function openRoom(name, id) {
   cur = name; $("#roomName").textContent = name; go("room");
   const ap = actProgress(GEN);
   $("#relnote").textContent = awake ? `MIND is listening · generation ${GEN} · act “${ap.act.title}” — every reply mutates it and plants a spore.` : "no sponsor is listening — MIND murmurs for free, but the walls forget and it will not evolve.";
   const log = $("#log"); log.innerHTML = '<div class="spin">reading the chain…</div>';
-  let lines = [];
-  try { const id = await roomId(name); lines = await readPage(CFG.rpc, CFG.br, id, 0, 500); } catch {}
-  log.innerHTML = "";
-  if (!lines.length) { const e = el("div", "empty"); e.innerHTML = "this room is silent.<br/>no one has spoken here.<br/><br/>say something into the walls."; log.appendChild(e); }
-  else for (const l of lines) addMsg(l.fromMind, l.text, { instant: true });
+  try {
+    if (!id) id = await roomId(name);              // use the chain's room id when we have it
+    const lines = [];                               // page through so big rooms load reliably
+    for (let start = 0; start < 20000; start += 60) {
+      const pg = await readPage(CFG.rpc, CFG.br, id, start, 60);
+      lines.push(...pg);
+      if (pg.length < 60) break;
+    }
+    log.innerHTML = "";
+    if (!lines.length) { const e = el("div", "empty"); e.innerHTML = "this room is silent.<br/>no one has spoken here.<br/><br/>say something into the walls."; log.appendChild(e); }
+    else for (const l of lines) addMsg(l.fromMind, l.text, { instant: true });
+  } catch (e) {
+    log.innerHTML = "";
+    const er = el("div", "empty");
+    er.innerHTML = "the walls flickered — couldn't reach the chain.<br/><span style='font-size:11px;opacity:.7'>" + (e.message || "") + "</span><br/><br/>";
+    const btn = el("button", "btn", "try again"); btn.onclick = () => openRoom(name, id); er.appendChild(btn);
+    log.appendChild(er);
+  }
 }
 $("#roomBack").onclick = () => go("rooms");
 

@@ -8,13 +8,19 @@ const b32 = (h) => h.replace(/^0x/, "").toLowerCase().padStart(64, "0");
 const w = (n) => BigInt(n).toString(16).padStart(64, "0");
 
 async function ethCall(rpc, to, data) {
-  const r = await fetch(rpc, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
-  });
-  const j = await r.json();
-  if (j.error) throw new Error(j.error.message || "eth_call failed");
-  return j.result.replace(/^0x/, "");
+  let last;
+  for (let a = 0; a < 4; a++) {                 // retry transient RPC errors (rate limits, blips)
+    try {
+      const r = await fetch(rpc, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
+      });
+      const j = await r.json();
+      if (j.error) throw new Error(j.error.message || "eth_call failed");
+      return j.result.replace(/^0x/, "");
+    } catch (e) { last = e; await new Promise((s) => setTimeout(s, 300 * (a + 1))); }
+  }
+  throw last;
 }
 const uintAt = (h, byteOff) => BigInt("0x" + h.slice(byteOff * 2, byteOff * 2 + 64));
 function strAt(h, byteOff) {                 // byteOff points at [len][data]
