@@ -261,7 +261,7 @@ import { spreadCount, allSeeds, recentSpores, ACTS, actIndex, actProgress } from
 const q = new URLSearchParams(location.search);
 const CFG = {
   rpc:   q.get("rpc")   || "https://rpc.mainnet.chain.robinhood.com",
-  voice: q.get("voice") || "0x29654b38f8bc12e4182bd89a5e9560c6b7c12bcb",
+  voice: q.get("voice") || "0x5968c3397434e26faca7c49ebe957c39ba453f46", // v2 brain (smarter voice)
   br:    q.get("br")    || "0x9fb4b2158633a0e0026ba4370770dc110edfbfad",
   spread:q.get("spread")|| "0x0f16a32c17f83f10c6d2450bbb8bb3de2573ffc7", // Spread registry on RH Chain
   relay: q.get("relay") || "https://mind-sponsor.onrender.com",
